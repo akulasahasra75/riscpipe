@@ -1,0 +1,12 @@
+*.jou
+*.log
+*.str
+.Xil/
+.cache/
+.hw/
+.ip_user_files/
+riscpipe.runs/
+riscpipe.sim/
+riscpipe.cache/
+riscpipe.hw/
+riscpipe.xpr
