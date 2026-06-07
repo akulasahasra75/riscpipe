@@ -3,9 +3,9 @@
 // Company: 
 // Engineer: 
 // 
-// Create Date: 06.06.2026 22:02:38
+// Create Date: 07.06.2026 10:28:10
 // Design Name: 
-// Module Name: alu
+// Module Name: if_id_reg
 // Project Name: 
 // Target Devices: 
 // Tool Versions: 
@@ -20,20 +20,19 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 
-module alu(input [31:0] a,b,
-input [2:0]alu_op,
-output zero,
-output reg [31:0] result);
+module if_id_reg( input clk,rst,flush,stall,
+input [31:0] pc_plus4_in, inst_in,
+output reg [31:0] pc_plus4_out,inst_out);
 
-always @(*)begin
-    case(alu_op) 
-       3'b000: result = a+b;
-       3'b001: result = a-b;
-       3'b010: result = a&b;
-       3'b011: result = a|b;
-       3'b100: result = (a<b)? 1'b1:1'b0;
-       default result = 0;
-    endcase
+always @(posedge clk)begin
+    if(rst | flush)begin
+        pc_plus4_out <=0;
+        inst_out <=0;
+    end
+    else if(!stall) begin
+        pc_plus4_out <= pc_plus4_in;
+        inst_out <= inst_in;
+    end
 end
-assign zero = (result == 32'd0) ? 1'b1 : 1'b0;
+
 endmodule
