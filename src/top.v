@@ -60,11 +60,29 @@ wire reg_write_wb, mem_to_reg_wb;
 
 wire [2:0] alu_op_ex;
 
-wire [31:0] alu_in_b;
+wire [31:0] alu_in_a, alu_in_b, alu_in_b_fwd;
+
+wire [1:0] forward_a, forward_b;
+wire flush_id_ex;
 
 wire [31:0] alu_result_mem, rd2_mem, pc_branch_mem;
 wire [4:0] rd_mem;
 wire reg_write_mem, mem_write_mem, mem_read_mem, mem_to_reg_mem, branch_mem, zero_mem;
+
+assign flush = flush_id_ex;
+
+assign alu_in_a =
+    (forward_a == 2'b10) ? alu_result_mem :
+    (forward_a == 2'b01) ? wd :
+                           rd1_ex;
+
+assign alu_in_b_fwd =
+    (forward_b == 2'b10) ? alu_result_mem :
+    (forward_b == 2'b01) ? wd :
+                           rd2_ex;
+
+assign alu_in_b = (alu_src_ex) ? imm_ex : alu_in_b_fwd;
+
 
 assign pc_plus4 = pc + 4;
 assign pc_branch = pc_branch_mem;
@@ -85,8 +103,6 @@ assign imm_b = {{19{inst_id[31]}}, inst_id[31], inst_id[7],
 assign imm = (opcode == 7'b0100011) ? imm_s :
              (opcode == 7'b1100011) ? imm_b :
              imm_i;
-
-assign alu_in_b = (alu_src_ex) ? imm_ex : rd2_ex;
 
 assign wd = (mem_to_reg_wb) ? mem_data_wb : alu_result_wb;
 
@@ -129,7 +145,7 @@ reg_file m4(
 );
 
 alu m5(
-    .a(rd1_ex),
+    .a(alu_in_a),
     .b(alu_in_b),
     .alu_op(alu_op_ex),
     .zero(zero),
@@ -234,5 +250,25 @@ mem_wb_reg m10(.clk(clk),
                .rd_out(rd_wb),
                .reg_write_out(reg_write_wb), 
                .mem_to_reg_out(mem_to_reg_wb));                                 
+
+forwarding_unit m11(
+    .rs1_ex(rs1_ex),
+    .rs2_ex(rs2_ex),
+    .rd_mem(rd_mem),
+    .rd_wb(rd_wb),
+    .reg_write_mem(reg_write_mem),
+    .reg_write_wb(reg_write_wb),
+    .forward_a(forward_a),
+    .forward_b(forward_b)
+);
+
+hazard_unit m12(
+    .rs1_id(rs1),
+    .rs2_id(rs2),
+    .rd_ex(rd_ex),
+    .mem_read_ex(mem_read_ex),
+    .stall(stall),
+    .flush_id_ex(flush_id_ex)
+);
 
 endmodule
