@@ -36,3 +36,40 @@ The processor implements a classic 5-stage pipeline:
 **Control hazards — flush:** On a taken branch, the two incorrectly fetched instructions are flushed from the pipeline.
 
 ## Module Structure
+src/
+├── top.v              — Top-level module, all wiring and glue logic
+├── pc_reg.v           — Program counter register with stall support
+├── inst_mem.v         — Instruction memory (64 x 32-bit ROM)
+├── reg_file.v         — 32-register file, dual read, single write
+├── control_unit.v     — Combinatorial control signal decoder
+├── alu.v              — 5-operation ALU with zero flag
+├── data_mem.v         — Data memory (64 x 32-bit RAM)
+├── if_id_reg.v        — IF/ID pipeline register
+├── id_ex_reg.v        — ID/EX pipeline register
+├── ex_mem_reg.v       — EX/MEM pipeline register
+├── mem_wb_reg.v       — MEM/WB pipeline register
+├── forwarding_unit.v  — RAW hazard forwarding logic
+└── hazard_unit.v      — Load-use stall detection
+sim/
+└── tb_top.v           — Top-level testbench
+
+## Simulation
+
+Simulated in Vivado 2023.1 behavioral simulation. Test program:
+ADDI x1, x0, 5      # x1 = 5
+ADDI x2, x0, 3      # x2 = 3
+ADD  x3, x1, x2     # x3 = 8  (forwarding from EX/MEM)
+SW   x3, 0(x0)      # mem[0] = 8
+LW   x4, 0(x0)      # x4 = 8  (load-use stall + MEM/WB forward)
+
+Expected result: x1=5, x2=3, x3=8, x4=8
+
+## Tools
+
+- Verilog HDL
+- Vivado 2023.1 (simulation only — Phase 1)
+- Target device: Artix-7 (Phase 2 — FPGA deployment, planned)
+
+## Repository
+
+[github.com/akulasahasra75/riscpipe](https://github.com/akulasahasra75/riscpipe)
